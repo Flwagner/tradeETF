@@ -24,7 +24,7 @@ export function EtfDetailPage() {
   const { id } = useParams();
   const [row, setRow] = useState<EtfWithData | null>(null);
   const [status, setStatus] = useState('Chargement...');
-  const [period, setPeriod] = useState<Period>('6m');
+  const [period, setPeriod] = useState<Period>('3m');
   const [isMomentumOpen, setIsMomentumOpen] = useState(true);
 
   useEffect(() => {

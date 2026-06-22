@@ -1,7 +1,7 @@
 {
   "name": "tradeETF · Momentum ETF",
   "short_name": "tradeETF",
-  "description": "Suivi momentum ETF, imports Supabase et backtests tactiques.",
+  "description": "Suivi momentum ETF et imports Supabase.",
   "start_url": "./#/",
   "scope": "./",
   "display": "standalone",

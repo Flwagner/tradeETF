@@ -78,56 +78,6 @@ export interface TrailingStopResult {
   candidates: TrailingStopCandidate[];
 }
 
-export interface BacktestSettings {
-  period: '1y' | '6m' | '3m';
-  stopLossPercent: number;
-  initialCapital: number;
-}
-
-export interface BacktestTrade {
-  etfId: string;
-  symbol: string;
-  entryDate: string;
-  exitDate: string;
-  entryPrice: number;
-  exitPrice: number;
-  stopPrice: number;
-  entryScore: number;
-  returnPercent: number;
-  capitalAfterExit: number;
-}
-
-export interface EquityPoint {
-  date: string;
-  value: number;
-}
-
-export interface OpenPosition {
-  etfId: string;
-  symbol: string;
-  entryDate: string;
-  entryPrice: number;
-  quantity: number;
-  stopPrice: number;
-  entryScore: number;
-  currentValue: number;
-}
-
-export interface BacktestResult {
-  settings: BacktestSettings;
-  summary: {
-    finalValue: number;
-    returnPercent: number;
-    tradeCount: number;
-    winRate: number;
-    averageTradeReturn: number;
-    maxDrawdown: number;
-  };
-  trades: BacktestTrade[];
-  openPosition: OpenPosition | null;
-  equityCurve: EquityPoint[];
-}
-
 export interface EtfWithData {
   etf: ETF;
   prices: PricePoint[];

@@ -47,7 +47,7 @@ export function HomePage() {
   );
   const best = ranking[0] ?? null;
   const latestPrice = best ? best.prices[best.prices.length - 1] : undefined;
-  const bestVisiblePrices = useMemo(() => filterLastMonths(best?.prices ?? [], 6), [best]);
+  const bestVisiblePrices = useMemo(() => filterLastMonths(best?.prices ?? [], 3), [best]);
   const isFresh = Boolean(best?.snapshot && latestPrice && daysSince(latestPrice.pricedAt) <= 3 && daysSince(best.snapshot.computedAt) <= 1);
 
   async function refreshDecision() {
@@ -401,11 +401,12 @@ function daysSince(date: string): number {
 }
 
 function filterLastMonths(prices: PricePoint[], months: number): PricePoint[] {
-  const latest = prices[prices.length - 1];
+  const sorted = [...prices].sort((a, b) => a.pricedAt.localeCompare(b.pricedAt));
+  const latest = sorted[sorted.length - 1];
   if (!latest) return [];
   const from = new Date(`${latest.pricedAt}T00:00:00`);
   from.setMonth(from.getMonth() - months);
-  return prices.filter((price) => price.pricedAt >= from.toISOString().slice(0, 10));
+  return sorted.filter((price) => price.pricedAt >= from.toISOString().slice(0, 10));
 }
 
 function looksLikeIsin(value: string): boolean {

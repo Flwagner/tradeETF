@@ -2,7 +2,7 @@
 
 Application React + Vite + TypeScript pour un lab personnel de momentum ETF. Toute la logique métier tourne dans le navigateur: Supabase est uniquement utilisé comme base persistante pour les ETF, prix et snapshots.
 
-Les classements et backtests sont indicatifs, hors frais, spread et fiscalité, et ne constituent pas un conseil financier.
+Les classements sont indicatifs, hors frais, spread et fiscalité, et ne constituent pas un conseil financier.
 
 ## Stack
 
@@ -94,7 +94,6 @@ Les modules purs sont dans `src/domain`:
 
 - `momentum.ts`: stratégie stable `momentum_v1`
 - `trailingStop.ts`: comparaison des stops 5%, 7%, 10%, 12%, 15%
-- `backtest.ts`: rotation tactique simple en cash/position unique
 
 Invariants importants:
 
@@ -111,11 +110,7 @@ npm run build
 
 ## Déploiement GitHub Pages
 
-URL de production GitHub Pages:
-
-```text
-https://flwagner.github.io/tradeETF/
-```
+URL de production GitHub Pages: [https://flwagner.github.io/tradeETF/](https://flwagner.github.io/tradeETF/)
 
 Le workflow [`.github/workflows/pages.yml`](./.github/workflows/pages.yml) lance:
 
