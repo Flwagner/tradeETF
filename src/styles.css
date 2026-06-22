@@ -527,9 +527,19 @@ a:hover {
 }
 
 @media (max-width: 680px) {
+  .page {
+    padding: 14px 10px 32px;
+  }
+
+  .panel {
+    padding: 12px;
+  }
+
   .topbar {
     align-items: flex-start;
     flex-direction: column;
+    gap: 10px;
+    padding: 12px;
   }
 
   .nav {
@@ -539,6 +549,44 @@ a:hover {
   .nav a {
     flex: 1;
     justify-content: center;
+    min-width: min(120px, 100%);
+  }
+
+  .panel-heading,
+  .heading-actions {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .heading-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .panel-heading small {
+    flex: 1;
+    min-width: 0;
+    text-align: left;
+    overflow-wrap: anywhere;
+  }
+
+  .panel-heading > span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .decision-symbol {
+    font-size: 1.55rem;
+    overflow-wrap: anywhere;
+  }
+
+  .segmented.compact {
+    width: 100%;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .segmented.compact button {
+    padding-inline: 6px;
   }
 
   .stat-grid,
@@ -551,8 +599,69 @@ a:hover {
     grid-template-columns: 1fr;
   }
 
-  th,
+  .table-wrap {
+    overflow-x: visible;
+  }
+
+  table,
+  thead,
+  tbody,
+  tr,
   td {
-    white-space: nowrap;
+    display: block;
+    width: 100%;
+  }
+
+  thead {
+    display: none;
+  }
+
+  tbody {
+    display: grid;
+    gap: 10px;
+  }
+
+  tr {
+    border: 1px solid #e1e7e5;
+    border-radius: 8px;
+    background: #fbfcfc;
+    padding: 8px 10px;
+  }
+
+  td {
+    display: grid;
+    grid-template-columns: minmax(96px, 0.42fr) minmax(0, 1fr);
+    gap: 10px;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #e8eeec;
+    overflow-wrap: anywhere;
+    text-align: right;
+    white-space: normal;
+  }
+
+  td:last-child {
+    border-bottom: 0;
+  }
+
+  td::before {
+    content: attr(data-label);
+    color: #65736f;
+    font-size: 0.78rem;
+    font-weight: 750;
+    text-align: left;
+  }
+
+  td > * {
+    min-width: 0;
+  }
+
+  td span {
+    grid-column: 2;
+    overflow-wrap: anywhere;
+  }
+
+  .row-actions {
+    justify-content: flex-end;
   }
 }

@@ -172,15 +172,15 @@ function CandidateTable({ row }: { row: EtfWithData }) {
         <tbody>
           {row.trailingStop.candidates.map((candidate) => (
             <tr key={candidate.percentage}>
-              <td>{candidate.percentage}%</td>
-              <td>{formatCurrency(candidate.stopPrice, row.etf.currency)}</td>
-              <td>{candidate.trades}</td>
-              <td>{formatNumber(candidate.averageReturn, 2)}%</td>
-              <td>{formatNumber(candidate.worstReturn, 2)}%</td>
-              <td>{formatNumber(candidate.bestReturn, 2)}%</td>
-              <td>{formatNumber(candidate.winRate, 1)}%</td>
-              <td>{formatNumber(candidate.stopHitRate, 1)}%</td>
-              <td>{formatNumber(candidate.riskAdjustedScore, 2)}</td>
+              <td data-label="Stop">{candidate.percentage}%</td>
+              <td data-label="Prix">{formatCurrency(candidate.stopPrice, row.etf.currency)}</td>
+              <td data-label="Trades">{candidate.trades}</td>
+              <td data-label="Moyenne">{formatNumber(candidate.averageReturn, 2)}%</td>
+              <td data-label="Pire">{formatNumber(candidate.worstReturn, 2)}%</td>
+              <td data-label="Meilleur">{formatNumber(candidate.bestReturn, 2)}%</td>
+              <td data-label="Win rate">{formatNumber(candidate.winRate, 1)}%</td>
+              <td data-label="Stop hit">{formatNumber(candidate.stopHitRate, 1)}%</td>
+              <td data-label="Score ajusté">{formatNumber(candidate.riskAdjustedScore, 2)}</td>
             </tr>
           ))}
         </tbody>

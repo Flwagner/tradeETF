@@ -323,14 +323,14 @@ export function HomePage() {
             <tbody>
               {rows.map((row) => (
                 <tr key={row.etf.id}>
-                  <td>
+                  <td data-label="ETF">
                     <Link to={`/etfs/${row.etf.id}`} className="table-title">{row.etf.symbol}</Link>
                     <span>{row.etf.name}</span>
                   </td>
-                  <td>{row.etf.isin}</td>
-                  <td>{formatCurrency(row.prices[row.prices.length - 1]?.closePrice, row.etf.currency)}</td>
-                  <td>{row.prices.length}</td>
-                  <td>
+                  <td data-label="ISIN">{row.etf.isin}</td>
+                  <td data-label="Dernier prix">{formatCurrency(row.prices[row.prices.length - 1]?.closePrice, row.etf.currency)}</td>
+                  <td data-label="Points">{row.prices.length}</td>
+                  <td data-label="Actions">
                     <div className="row-actions">
                       <button className="icon-button" title="Importer Yahoo" onClick={() => importYahoo(row)}>
                         <RefreshCw size={16} />
@@ -369,15 +369,15 @@ export function HomePage() {
             <tbody>
               {ranking.map((row, index) => (
                 <tr key={row.etf.id}>
-                  <td>{index + 1}</td>
-                  <td><Link to={`/etfs/${row.etf.id}`} className="table-title">{row.etf.symbol}</Link></td>
-                  <td>{formatNumber(row.snapshot?.score, 1)}</td>
-                  <td><SignalBadge signal={row.snapshot?.signal} /></td>
-                  <td>{formatSignedPercent(row.snapshot?.performance6Months)}</td>
-                  <td>{formatSignedPercent(row.snapshot?.performance12Months)}</td>
-                  <td>{formatPercent(row.snapshot?.volatilityAnnualized)}</td>
-                  <td>{row.trailingStop.recommended ? `${row.trailingStop.recommended.percentage}%` : '-'}</td>
-                  <td>{formatNumber(row.snapshot?.movingAverage200)}</td>
+                  <td data-label="Rang">{index + 1}</td>
+                  <td data-label="ETF"><Link to={`/etfs/${row.etf.id}`} className="table-title">{row.etf.symbol}</Link></td>
+                  <td data-label="Score">{formatNumber(row.snapshot?.score, 1)}</td>
+                  <td data-label="Signal"><SignalBadge signal={row.snapshot?.signal} /></td>
+                  <td data-label="Perf 6M">{formatSignedPercent(row.snapshot?.performance6Months)}</td>
+                  <td data-label="Perf 12M">{formatSignedPercent(row.snapshot?.performance12Months)}</td>
+                  <td data-label="Volatilité">{formatPercent(row.snapshot?.volatilityAnnualized)}</td>
+                  <td data-label="Stop">{row.trailingStop.recommended ? `${row.trailingStop.recommended.percentage}%` : '-'}</td>
+                  <td data-label="MM200">{formatNumber(row.snapshot?.movingAverage200)}</td>
                 </tr>
               ))}
             </tbody>

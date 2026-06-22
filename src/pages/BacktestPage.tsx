@@ -120,15 +120,15 @@ export function BacktestPage() {
             <tbody>
               {result.trades.map((trade, index) => (
                 <tr key={`${trade.etfId}-${trade.entryDate}-${index}`}>
-                  <td>{trade.symbol}</td>
-                  <td>{trade.entryDate}</td>
-                  <td>{trade.exitDate}</td>
-                  <td>{formatCurrency(trade.entryPrice)}</td>
-                  <td>{formatCurrency(trade.exitPrice)}</td>
-                  <td>{formatCurrency(trade.stopPrice)}</td>
-                  <td>{formatNumber(trade.entryScore, 1)}</td>
-                  <td>{formatSignedPercent(trade.returnPercent)}</td>
-                  <td>{formatCurrency(trade.capitalAfterExit)}</td>
+                  <td data-label="ETF">{trade.symbol}</td>
+                  <td data-label="Entrée">{trade.entryDate}</td>
+                  <td data-label="Sortie">{trade.exitDate}</td>
+                  <td data-label="Prix entrée">{formatCurrency(trade.entryPrice)}</td>
+                  <td data-label="Prix sortie">{formatCurrency(trade.exitPrice)}</td>
+                  <td data-label="Stop">{formatCurrency(trade.stopPrice)}</td>
+                  <td data-label="Score">{formatNumber(trade.entryScore, 1)}</td>
+                  <td data-label="Performance">{formatSignedPercent(trade.returnPercent)}</td>
+                  <td data-label="Capital après sortie">{formatCurrency(trade.capitalAfterExit)}</td>
                 </tr>
               ))}
             </tbody>
