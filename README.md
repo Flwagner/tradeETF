@@ -132,7 +132,9 @@ Ajouter les secrets GitHub:
 - `VITE_SUPABASE_PUBLISHABLE_KEY`
 - `SUPABASE_ACCESS_TOKEN`
 
-`SUPABASE_ACCESS_TOKEN` est un token personnel Supabase utilisé uniquement par GitHub Actions pour exécuter `supabase functions deploy --project-ref nfnkrzgvziepxwdikiuw`. Les secrets peuvent être créés au niveau du dépôt ou dans l’environnement GitHub `prod`; les jobs `deploy-functions` et `build` déclarent cet environnement pour pouvoir lire les secrets d’environnement. Activer ensuite GitHub Pages avec la source “GitHub Actions”.
+`SUPABASE_ACCESS_TOKEN` est un token personnel Supabase utilisé uniquement par GitHub Actions pour exécuter `supabase functions deploy --project-ref nfnkrzgvziepxwdikiuw`. Les secrets peuvent être créés au niveau du dépôt ou dans l’environnement GitHub `prod`; les jobs `deploy-functions` et `build` déclarent cet environnement pour pouvoir lire les secrets d’environnement.
+
+Le workflow utilise `actions/configure-pages` avec `enablement: true`, ce qui peut activer/configurer Pages automatiquement. Si GitHub refuse encore l’étape `Configure Pages`, activer manuellement GitHub Pages dans `Settings > Pages > Build and deployment > Source: GitHub Actions`.
 
 ## Note pour agents IA
 
