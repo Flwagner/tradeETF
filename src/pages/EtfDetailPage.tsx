@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, RefreshCw } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
+import { CollapsiblePanel } from '../components/CollapsiblePanel';
 import { Disclaimer } from '../components/Disclaimer';
 import { PriceSparkline } from '../components/PriceSparkline';
 import { SignalBadge } from '../components/SignalBadge';
@@ -24,6 +25,7 @@ export function EtfDetailPage() {
   const [row, setRow] = useState<EtfWithData | null>(null);
   const [status, setStatus] = useState('Chargement...');
   const [period, setPeriod] = useState<Period>('6m');
+  const [isMomentumOpen, setIsMomentumOpen] = useState(true);
 
   useEffect(() => {
     loadEtfData()
@@ -95,23 +97,10 @@ export function EtfDetailPage() {
         </div>
       </section>
 
-      <section className="detail-grid">
-        <div className="panel">
-          <div className="panel-heading"><span>Identité</span></div>
-          <dl className="definition-list">
-            <dt>ISIN</dt><dd>{row.etf.isin}</dd>
-            <dt>Place</dt><dd>{row.etf.exchange}</dd>
-            <dt>Devise</dt><dd>{row.etf.currency}</dd>
-            <dt>Symbole fournisseur</dt><dd>{row.etf.dataProviderSymbol ?? '-'}</dd>
-            <dt>Points de prix</dt><dd>{row.prices.length}</dd>
-            <dt>Dernière séance</dt><dd>{formatDate(latest?.pricedAt)}</dd>
-          </dl>
-        </div>
-
+      <section className="detail-grid trailing-detail-grid">
         <div className="panel">
           <div className="panel-heading">
             <span>Trailing stop hebdo</span>
-            <RefreshCw size={17} />
           </div>
           {row.trailingStop.available && stop ? (
             <>
@@ -128,10 +117,25 @@ export function EtfDetailPage() {
             <p>{row.trailingStop.message ?? 'historique insuffisant'}</p>
           )}
         </div>
+
+        <div className="panel">
+          <div className="panel-heading"><span>Identité</span></div>
+          <dl className="definition-list">
+            <dt>ISIN</dt><dd>{row.etf.isin}</dd>
+            <dt>Place</dt><dd>{row.etf.exchange}</dd>
+            <dt>Devise</dt><dd>{row.etf.currency}</dd>
+            <dt>Symbole fournisseur</dt><dd>{row.etf.dataProviderSymbol ?? '-'}</dd>
+            <dt>Points de prix</dt><dd>{row.prices.length}</dd>
+            <dt>Dernière séance</dt><dd>{formatDate(latest?.pricedAt)}</dd>
+          </dl>
+        </div>
       </section>
 
-      <section className="panel">
-        <div className="panel-heading"><span>Calcul momentum</span></div>
+      <CollapsiblePanel
+        title="Calcul momentum"
+        isOpen={isMomentumOpen}
+        onToggle={() => setIsMomentumOpen((current) => !current)}
+      >
         <div className="stat-grid wide">
           <Stat label="Perf 1M" value={formatSignedPercent(snapshot?.performance1Month)} />
           <Stat label="Perf 3M" value={formatSignedPercent(snapshot?.performance3Months)} />
@@ -154,7 +158,7 @@ export function EtfDetailPage() {
             </div>
           ))}
         </div>
-      </section>
+      </CollapsiblePanel>
       <Disclaimer />
     </main>
   );
@@ -179,7 +183,10 @@ function CandidateTable({ row }: { row: EtfWithData }) {
         </thead>
         <tbody>
           {row.trailingStop.candidates.map((candidate) => (
-            <tr key={candidate.percentage}>
+            <tr
+              key={candidate.percentage}
+              className={candidate.percentage === row.trailingStop.recommended?.percentage ? 'highlight-row' : undefined}
+            >
               <td data-label="Stop">{candidate.percentage}%</td>
               <td data-label="Prix">{formatCurrency(candidate.stopPrice, row.etf.currency)}</td>
               <td data-label="Trades">{candidate.trades}</td>

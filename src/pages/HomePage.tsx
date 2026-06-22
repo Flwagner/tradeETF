@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { RefreshCw, Save, Trash2, Upload } from 'lucide-react';
+import { CollapsiblePanel } from '../components/CollapsiblePanel';
 import { Disclaimer } from '../components/Disclaimer';
 import { PriceSparkline } from '../components/PriceSparkline';
 import { SignalBadge } from '../components/SignalBadge';
@@ -28,6 +29,8 @@ export function HomePage() {
   const [since, setSince] = useState(new Date(new Date().setFullYear(new Date().getFullYear() - 2)).toISOString().slice(0, 10));
   const [boursobankLimit, setBoursobankLimit] = useState(15);
   const [isImportingTop, setIsImportingTop] = useState(false);
+  const [isUniverseOpen, setIsUniverseOpen] = useState(true);
+  const [isRankingOpen, setIsRankingOpen] = useState(true);
 
   useEffect(() => {
     loadEtfData()
@@ -295,10 +298,12 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="panel">
-        <div className="panel-heading">
-          <span>Univers ETF · {rows.length} suivis</span>
-          <div className="heading-actions">
+      <CollapsiblePanel
+        title={`Univers ETF · ${rows.length} suivis`}
+        isOpen={isUniverseOpen}
+        onToggle={() => setIsUniverseOpen((current) => !current)}
+        actions={
+          <>
             <small>{status}</small>
             <button
               className="icon-button danger"
@@ -308,8 +313,9 @@ export function HomePage() {
             >
               <Trash2 size={16} />
             </button>
-          </div>
-        </div>
+          </>
+        }
+      >
         <div className="table-wrap">
           <table>
             <thead>
@@ -346,12 +352,13 @@ export function HomePage() {
             </tbody>
           </table>
         </div>
-      </section>
+      </CollapsiblePanel>
 
-      <section className="panel">
-        <div className="panel-heading">
-          <span>Classement momentum</span>
-        </div>
+      <CollapsiblePanel
+        title="Classement momentum"
+        isOpen={isRankingOpen}
+        onToggle={() => setIsRankingOpen((current) => !current)}
+      >
         <div className="table-wrap">
           <table>
             <thead>
@@ -384,7 +391,7 @@ export function HomePage() {
             </tbody>
           </table>
         </div>
-      </section>
+      </CollapsiblePanel>
     </main>
   );
 }

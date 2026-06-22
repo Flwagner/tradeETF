@@ -111,6 +111,18 @@ th {
   background: #f8faf9;
 }
 
+tr.highlight-row {
+  background: #fff8e8;
+}
+
+tr.highlight-row td {
+  border-bottom-color: #f0d9a8;
+}
+
+tr.highlight-row td:first-child {
+  box-shadow: inset 4px 0 0 #d99a18;
+}
+
 td span {
   display: block;
   color: #65736f;
@@ -192,6 +204,10 @@ a:hover {
   gap: 18px;
 }
 
+.trailing-detail-grid {
+  grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr);
+}
+
 .panel {
   border: 1px solid #dce4e1;
   border-radius: 8px;
@@ -221,6 +237,46 @@ a:hover {
   justify-content: flex-end;
   gap: 8px;
   min-width: 0;
+}
+
+.collapsible-panel.is-collapsed .panel-heading {
+  margin-bottom: 0;
+}
+
+.collapsible-heading {
+  align-items: center;
+}
+
+.collapse-toggle {
+  display: inline-flex;
+  min-width: 0;
+  min-height: 34px;
+  justify-content: flex-start;
+  border: 0;
+  background: transparent;
+  color: #52615e;
+  padding: 0;
+  font-weight: 750;
+}
+
+.collapse-toggle:hover {
+  background: transparent;
+  color: #087465;
+}
+
+.collapse-toggle svg {
+  flex: 0 0 auto;
+  transition: transform 0.18s ease;
+}
+
+.collapse-toggle[aria-expanded="false"] svg {
+  transform: rotate(-90deg);
+}
+
+.collapse-toggle span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: left;
 }
 
 .decision-panel h1,
