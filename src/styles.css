@@ -139,6 +139,18 @@ a:hover {
   text-decoration: underline;
 }
 
+.isin-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.isin-link.muted {
+  color: #65736f;
+}
+
 .app-shell {
   min-height: 100vh;
 }
@@ -581,6 +593,18 @@ a:hover {
 .table-title {
   color: #17211f;
   font-weight: 800;
+}
+
+.data-date {
+  display: inline-block;
+  margin-top: 0;
+  color: #52615e;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.data-date-stale {
+  color: #b96b08;
 }
 
 .row-actions {

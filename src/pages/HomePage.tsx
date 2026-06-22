@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { RefreshCw, Save, Trash2, Upload } from 'lucide-react';
 import { CollapsiblePanel } from '../components/CollapsiblePanel';
+import { BoursobankIsinLink } from '../components/BoursobankIsinLink';
 import { Disclaimer } from '../components/Disclaimer';
 import { PriceSparkline } from '../components/PriceSparkline';
 import { SignalBadge } from '../components/SignalBadge';
@@ -28,7 +29,9 @@ export function HomePage() {
   const [etfInput, setEtfInput] = useState('');
   const [since, setSince] = useState(new Date(new Date().setFullYear(new Date().getFullYear() - 2)).toISOString().slice(0, 10));
   const [boursobankLimit, setBoursobankLimit] = useState(15);
+  const [isImportingPrices, setIsImportingPrices] = useState(false);
   const [isImportingTop, setIsImportingTop] = useState(false);
+  const [isRefreshingScores, setIsRefreshingScores] = useState(false);
   const [isUniverseOpen, setIsUniverseOpen] = useState(true);
   const [isRankingOpen, setIsRankingOpen] = useState(true);
 
@@ -46,24 +49,41 @@ export function HomePage() {
     [rows],
   );
   const best = ranking[0] ?? null;
-  const latestPrice = best ? best.prices[best.prices.length - 1] : undefined;
+  const latestPrice = latestPriceOf(best?.prices ?? []);
   const bestVisiblePrices = useMemo(() => filterLastMonths(best?.prices ?? [], 3), [best]);
   const isFresh = Boolean(best?.snapshot && latestPrice && daysSince(latestPrice.pricedAt) <= 3 && daysSince(best.snapshot.computedAt) <= 1);
 
-  async function refreshDecision() {
-    const snapshots = rows.flatMap((row) => {
+  async function refreshDecision(sourceRows = rows) {
+    if (sourceRows.length === 0) return sourceRows;
+
+    setIsRefreshingScores(true);
+    try {
+      const { nextRows, snapshotCount } = await computeRowsWithFreshScores(sourceRows);
+      setRows(nextRows);
+      setStatus(`${snapshotCount} snapshots momentum recalculés${isSupabaseConfigured ? ' et persistés.' : ' en local.'}`);
+      return nextRows;
+    } catch (error) {
+      setStatus((error as Error).message);
+      return sourceRows;
+    } finally {
+      setIsRefreshingScores(false);
+    }
+  }
+
+  async function computeRowsWithFreshScores(sourceRows: EtfWithData[]) {
+    const snapshots = sourceRows.flatMap((row) => {
       if (row.prices.length < 2) return [];
       return [computeMomentumV1(row.etf.id, row.prices, new Date().toISOString().slice(0, 10))];
     });
     if (isSupabaseConfigured) await upsertSnapshots(snapshots);
-    setRows((current) =>
-      current.map((row) => ({
+    return {
+      snapshotCount: snapshots.length,
+      nextRows: sourceRows.map((row) => ({
         ...row,
         snapshot: snapshots.find((snapshot) => snapshot.etfId === row.etf.id) ?? row.snapshot,
         trailingStop: computeTrailingStop(row.prices),
       })),
-    );
-    setStatus(`${snapshots.length} snapshots momentum recalculés${isSupabaseConfigured ? ' et persistés.' : ' en local.'}`);
+    };
   }
 
   async function addEtfs() {
@@ -82,16 +102,55 @@ export function HomePage() {
     }
   }
 
-  async function importYahoo(row: EtfWithData) {
-    setStatus(`Import Yahoo ${row.etf.symbol}...`);
+  async function refreshPricesThenDecision() {
+    const nextRows = await importAllYahoo();
+    if (nextRows.length === 0) return;
+    await refreshDecision(nextRows);
+  }
+
+  async function importAllYahoo() {
+    if (rows.length === 0) return rows;
+
+    setIsImportingPrices(true);
     try {
-      const etf = await resolveExistingEtfForYahoo(row.etf);
-      const symbol = etf.dataProviderSymbol || etf.symbol;
-      const parsed = await tryYahooDownload(symbol, row.etf.id, since);
-      await mergePrices(parsed);
+      const { failures, importedPrices, nextRows } = await importYahooPricesForRows(rows);
+      setRows(nextRows);
+
+      const failureText = failures.length > 0 ? ` ${failures.length} échecs.` : '';
+      setStatus(`${importedPrices.length} prix importés pour ${rows.length - failures.length}/${rows.length} ETF.${failureText}`);
+      return nextRows;
     } catch (error) {
       setStatus((error as Error).message);
+      return rows;
+    } finally {
+      setIsImportingPrices(false);
     }
+  }
+
+  async function importYahooPricesForRows(sourceRows: EtfWithData[]) {
+    const importedPrices: PricePoint[] = [];
+    const updatedEtfs = new Map<string, ETF>();
+    const failures: string[] = [];
+
+    for (const [index, row] of sourceRows.entries()) {
+      try {
+        setStatus(`Import Yahoo ${index + 1}/${sourceRows.length} · ${row.etf.symbol}...`);
+        const etf = await resolveExistingEtfForYahoo(row.etf);
+        updatedEtfs.set(etf.id, etf);
+        const symbol = etf.dataProviderSymbol || etf.symbol;
+        importedPrices.push(...(await tryYahooDownload(symbol, etf.id, since)));
+      } catch (error) {
+        failures.push(`${row.etf.symbol}: ${(error as Error).message}`);
+      }
+    }
+
+    if (isSupabaseConfigured) await upsertPrices(importedPrices);
+
+    return {
+      failures,
+      importedPrices,
+      nextRows: mergeImportedPrices(sourceRows, importedPrices, updatedEtfs),
+    };
   }
 
   async function importBoursobankTop() {
@@ -154,19 +213,15 @@ export function HomePage() {
     }
   }
 
-  async function mergePrices(prices: PricePoint[]) {
-    if (prices.length === 0) {
-      setStatus('Aucun prix valide trouvé dans l’import.');
-      return;
+  function mergeImportedPrices(sourceRows: EtfWithData[], prices: PricePoint[], updatedEtfs = new Map<string, ETF>()) {
+    const etfs = sourceRows.map((row) => updatedEtfs.get(row.etf.id) ?? row.etf);
+    const priceMap = new Map(sourceRows.map((row) => [row.etf.id, row.prices]));
+    for (const price of prices) {
+      const existing = priceMap.get(price.etfId) ?? [];
+      const merged = new Map([...existing, price].map((item) => [`${item.pricedAt}-${item.source}`, item]));
+      priceMap.set(price.etfId, [...merged.values()].sort((a, b) => a.pricedAt.localeCompare(b.pricedAt)));
     }
-    if (isSupabaseConfigured) await upsertPrices(prices);
-    const etfs = rows.map((row) => row.etf);
-    const priceMap = new Map(rows.map((row) => [row.etf.id, row.prices]));
-    const existing = priceMap.get(prices[0].etfId) ?? [];
-    const merged = new Map([...existing, ...prices].map((price) => [`${price.pricedAt}-${price.source}`, price]));
-    priceMap.set(prices[0].etfId, [...merged.values()].sort((a, b) => a.pricedAt.localeCompare(b.pricedAt)));
-    setRows(buildRows(etfs, priceMap));
-    setStatus(`${prices.length} prix importés${isSupabaseConfigured ? ' dans Supabase.' : ' en local.'}`);
+    return buildRows(etfs, priceMap);
   }
 
   async function removeRow(row: EtfWithData) {
@@ -213,9 +268,6 @@ export function HomePage() {
       throw new Error(`Aucun symbole Yahoo trouvé pour ${etf.isin}`);
     }
     const saved = isSupabaseConfigured ? await upsertEtf({ ...resolved, id: etf.id }) : { ...etf, ...resolved };
-    setRows((current) =>
-      current.map((row) => (row.etf.id === etf.id ? { ...row, etf: saved } : row)),
-    );
     return saved;
   }
 
@@ -225,8 +277,13 @@ export function HomePage() {
         <div className="panel decision-panel">
           <div className="panel-heading">
             <span>Décision maintenant</span>
-            <button className="icon-button" onClick={refreshDecision} title="Rafraîchir puis décider">
-              <RefreshCw size={17} />
+            <button
+              className="icon-button"
+              onClick={refreshPricesThenDecision}
+              title="Rafraîchir les prix puis recalculer la décision"
+              disabled={rows.length === 0 || isImportingPrices || isRefreshingScores}
+            >
+              <RefreshCw size={17} className={isImportingPrices || isRefreshingScores ? 'spin' : undefined} />
             </button>
           </div>
           <h1>Quel ETF acheter ?</h1>
@@ -246,7 +303,11 @@ export function HomePage() {
                 <Stat label="Prix actuel" value={formatCurrency(latestPrice?.closePrice, best.etf.currency)} />
                 <Stat label="Stop conseillé" value={`${best.trailingStop.recommended?.percentage ?? '-'}% · ${formatCurrency(best.trailingStop.recommended?.stopPrice, best.etf.currency)}`} />
                 <Stat label="Score" value={formatNumber(best.snapshot.score, 1)} tone={best.snapshot.signal === 'buy' ? 'success' : 'warning'} />
-                <Stat label="Fraîcheur" value={isFresh ? 'Données fraîches' : 'À rafraîchir'} tone={isFresh ? 'success' : 'warning'} />
+                <Stat
+                  label="Fraîcheur"
+                  value={`${isFresh ? 'Données fraîches' : 'À rafraîchir'} · ${formatDate(latestPrice?.pricedAt)}`}
+                  tone={isFresh ? 'success' : 'warning'}
+                />
               </div>
             </>
           ) : (
@@ -306,6 +367,14 @@ export function HomePage() {
           <>
             <small>{status}</small>
             <button
+              className="icon-button"
+              title="Rafraîchir tous les prix Yahoo"
+              onClick={importAllYahoo}
+              disabled={rows.length === 0 || isImportingPrices}
+            >
+              <RefreshCw size={16} className={isImportingPrices ? 'spin' : undefined} />
+            </button>
+            <button
               className="icon-button danger"
               title="Supprimer tous les ETF et leurs données"
               onClick={removeAllRows}
@@ -323,32 +392,43 @@ export function HomePage() {
                 <th>ETF</th>
                 <th>ISIN</th>
                 <th>Dernier prix</th>
+                <th>Dernière donnée</th>
                 <th>Points</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {rows.map((row) => (
-                <tr key={row.etf.id}>
-                  <td data-label="ETF">
-                    <Link to={`/etfs/${row.etf.id}`} className="table-title">{row.etf.symbol}</Link>
-                    <span>{row.etf.name}</span>
-                  </td>
-                  <td data-label="ISIN">{row.etf.isin}</td>
-                  <td data-label="Dernier prix">{formatCurrency(row.prices[row.prices.length - 1]?.closePrice, row.etf.currency)}</td>
-                  <td data-label="Points">{row.prices.length}</td>
-                  <td data-label="Actions">
-                    <div className="row-actions">
-                      <button className="icon-button" title="Importer Yahoo" onClick={() => importYahoo(row)}>
-                        <RefreshCw size={16} />
-                      </button>
-                      <button className="icon-button danger" title="Supprimer" onClick={() => removeRow(row)}>
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {rows.map((row) => {
+                const rowLatestPrice = latestPriceOf(row.prices);
+                const isStale = !rowLatestPrice || daysSince(rowLatestPrice.pricedAt) > 3;
+
+                return (
+                  <tr key={row.etf.id}>
+                    <td data-label="ETF">
+                      <Link to={`/etfs/${row.etf.id}`} className="table-title">{row.etf.symbol}</Link>
+                      <span>{row.etf.name}</span>
+                    </td>
+                    <td data-label="ISIN"><BoursobankIsinLink etf={row.etf} /></td>
+                    <td data-label="Dernier prix">{formatCurrency(rowLatestPrice?.closePrice, row.etf.currency)}</td>
+                    <td data-label="Dernière donnée">
+                      <span
+                        className={isStale ? 'data-date data-date-stale' : 'data-date'}
+                        title="Date de la dernière donnée de prix importée"
+                      >
+                        {formatDate(rowLatestPrice?.pricedAt)}
+                      </span>
+                    </td>
+                    <td data-label="Points">{row.prices.length}</td>
+                    <td data-label="Actions">
+                      <div className="row-actions">
+                        <button className="icon-button danger" title="Supprimer" onClick={() => removeRow(row)}>
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -358,6 +438,16 @@ export function HomePage() {
         title="Classement momentum"
         isOpen={isRankingOpen}
         onToggle={() => setIsRankingOpen((current) => !current)}
+        actions={
+          <button
+            className="icon-button"
+            title="Recalculer les scores momentum"
+            onClick={() => void refreshDecision()}
+            disabled={rows.length === 0 || isRefreshingScores}
+          >
+            <RefreshCw size={16} className={isRefreshingScores ? 'spin' : undefined} />
+          </button>
+        }
       >
         <div className="table-wrap">
           <table>
@@ -398,6 +488,10 @@ export function HomePage() {
 
 function daysSince(date: string): number {
   return Math.abs(Date.now() - new Date(`${date}T00:00:00`).getTime()) / 86_400_000;
+}
+
+function latestPriceOf(prices: PricePoint[]): PricePoint | undefined {
+  return [...prices].sort((a, b) => a.pricedAt.localeCompare(b.pricedAt)).at(-1);
 }
 
 function filterLastMonths(prices: PricePoint[], months: number): PricePoint[] {

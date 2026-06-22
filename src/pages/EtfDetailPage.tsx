@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
+import { BoursobankIsinLink } from '../components/BoursobankIsinLink';
 import { CollapsiblePanel } from '../components/CollapsiblePanel';
 import { Disclaimer } from '../components/Disclaimer';
 import { PriceSparkline } from '../components/PriceSparkline';
@@ -59,7 +60,7 @@ export function EtfDetailPage() {
       <Link to="/" className="back-link"><ArrowLeft size={16} /> Retour</Link>
       <section className="panel detail-header">
         <div>
-          <span className="muted">{row.etf.isin}</span>
+          <BoursobankIsinLink etf={row.etf} className="muted" />
           <h1>{row.etf.symbol} · {row.etf.name}</h1>
         </div>
         <div className="header-metrics">
@@ -121,7 +122,7 @@ export function EtfDetailPage() {
         <div className="panel">
           <div className="panel-heading"><span>Identité</span></div>
           <dl className="definition-list">
-            <dt>ISIN</dt><dd>{row.etf.isin}</dd>
+            <dt>ISIN</dt><dd><BoursobankIsinLink etf={row.etf} /></dd>
             <dt>Place</dt><dd>{row.etf.exchange}</dd>
             <dt>Devise</dt><dd>{row.etf.currency}</dd>
             <dt>Symbole fournisseur</dt><dd>{row.etf.dataProviderSymbol ?? '-'}</dd>
