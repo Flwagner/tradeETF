@@ -55,6 +55,7 @@ Fonctions:
 
 - `yahoo-search`: reçoit un ISIN, appelle Yahoo Search, retourne les métadonnées ETF et le symbole Yahoo fournisseur.
 - `yahoo-prices`: reçoit un symbole Yahoo, un ETF Supabase et une date de départ, appelle Yahoo Chart, retourne des `PricePoint` normalisés.
+- `boursobank-top`: lit le top ETF Boursobank côté Supabase, récupère les ISIN depuis les fiches détail, puis renvoie la liste au front.
 
 Flux d’import:
 
@@ -80,7 +81,7 @@ L’app supporte:
 - saisie manuelle de l’univers ETF au format `ISIN ou symbole,nom,place,devise,symbole Yahoo`
 - import Yahoo Finance via Supabase Edge Functions pour éviter les blocages CORS du navigateur
 - résolution automatique Yahoo d’un ISIN via la fonction `yahoo-search` quand le symbole Yahoo n’est pas fourni
-- Top Boursobank affiché comme expérimental
+- import du top ETF Boursobank via la fonction `boursobank-top`, puis résolution Yahoo et écriture dans Supabase depuis le front
 
 Exemples de symboles Yahoo testés:
 

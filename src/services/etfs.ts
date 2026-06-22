@@ -40,6 +40,14 @@ export async function deleteEtf(id: string): Promise<void> {
   if (error) throw error;
 }
 
+export async function deleteAllEtfs(): Promise<void> {
+  const { error } = await requireSupabase()
+    .from('etfs')
+    .delete()
+    .neq('id', '00000000-0000-0000-0000-000000000000');
+  if (error) throw error;
+}
+
 export function fromRow(row: EtfRow): ETF {
   return {
     id: row.id,

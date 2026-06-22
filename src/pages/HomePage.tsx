@@ -10,7 +10,7 @@ import { computeMomentumV1 } from '../domain/momentum';
 import { computeTrailingStop } from '../domain/trailingStop';
 import { isSupabaseConfigured } from '../lib/supabase';
 import { buildRows, loadEtfData } from '../services/appData';
-import { deleteEtf, upsertEtf } from '../services/etfs';
+import { deleteAllEtfs, deleteEtf, upsertEtf } from '../services/etfs';
 import {
   parseEtfTextarea,
   searchYahooEtfByIsin,
@@ -26,6 +26,8 @@ export function HomePage() {
   const [status, setStatus] = useState('Chargement...');
   const [etfInput, setEtfInput] = useState('');
   const [since, setSince] = useState(new Date(new Date().setFullYear(new Date().getFullYear() - 2)).toISOString().slice(0, 10));
+  const [boursobankLimit, setBoursobankLimit] = useState(15);
+  const [isImportingTop, setIsImportingTop] = useState(false);
 
   useEffect(() => {
     loadEtfData()
@@ -88,6 +90,66 @@ export function HomePage() {
     }
   }
 
+  async function importBoursobankTop() {
+    if (!isSupabaseConfigured) {
+      setStatus('Supabase est requis pour importer le top Boursobank.');
+      return;
+    }
+
+    const limit = Math.min(20, Math.max(1, Math.trunc(boursobankLimit)));
+    setIsImportingTop(true);
+    try {
+      setStatus(`Lecture du top ${limit} Boursobank...`);
+      const topEtfs = await tryBoursobankTopEtf(limit);
+      if (topEtfs.length === 0) {
+        setStatus('Aucun ETF trouvé dans le top Boursobank.');
+        return;
+      }
+
+      const saved: ETF[] = [];
+      const failures: string[] = [];
+
+      for (const item of topEtfs) {
+        try {
+          const resolved = await searchYahooEtfByIsin(item.isin, 'EUR');
+          if (!resolved?.dataProviderSymbol) {
+            throw new Error('symbole Yahoo introuvable');
+          }
+          saved.push(
+            await upsertEtf({
+              ...resolved,
+              name: resolved.name || item.name,
+              boursoIdentifier: item.boursoIdentifier,
+              peaEligible: false,
+              active: true,
+            }),
+          );
+        } catch (error) {
+          failures.push(`${item.isin}: ${(error as Error).message}`);
+        }
+      }
+
+      let priceCount = 0;
+      for (const etf of saved) {
+        try {
+          const prices = await tryYahooDownload(etf.dataProviderSymbol || etf.symbol, etf.id, since);
+          await upsertPrices(prices);
+          priceCount += prices.length;
+        } catch (error) {
+          failures.push(`${etf.symbol}: ${(error as Error).message}`);
+        }
+      }
+
+      setRows(await loadEtfData());
+      const failureText = failures.length > 0 ? ` ${failures.length} échecs.` : '';
+      setStatus(`${saved.length} ETF Boursobank importés, ${priceCount} prix ajoutés.${failureText}`);
+    } catch (error) {
+      setStatus((error as Error).message);
+    } finally {
+      setIsImportingTop(false);
+    }
+  }
+
   async function mergePrices(prices: PricePoint[]) {
     if (prices.length === 0) {
       setStatus('Aucun prix valide trouvé dans l’import.');
@@ -109,11 +171,35 @@ export function HomePage() {
     setStatus(`${row.etf.symbol} supprimé.`);
   }
 
+  async function removeAllRows() {
+    if (rows.length === 0) return;
+    const confirmed = window.confirm(
+      `Supprimer les ${rows.length} ETF et toutes leurs données de prix/snapshots ?`,
+    );
+    if (!confirmed) return;
+
+    try {
+      setStatus('Suppression de tous les ETF...');
+      if (isSupabaseConfigured) await deleteAllEtfs();
+      setRows([]);
+      setStatus(`${rows.length} ETF supprimés avec leurs données.`);
+    } catch (error) {
+      setStatus((error as Error).message);
+    }
+  }
+
   async function resolveEtfForYahoo(etf: Omit<ETF, 'id'>): Promise<Omit<ETF, 'id'>> {
     if (!isSupabaseConfigured) return etf;
     if (etf.dataProviderSymbol || !looksLikeIsin(etf.isin)) return etf;
     const resolved = await searchYahooEtfByIsin(etf.isin, etf.currency);
-    return resolved ? { ...resolved, peaEligible: etf.peaEligible, active: etf.active } : etf;
+    return resolved
+      ? {
+          ...resolved,
+          peaEligible: etf.peaEligible,
+          active: etf.active,
+          boursoIdentifier: etf.boursoIdentifier ?? resolved.boursoIdentifier,
+        }
+      : etf;
   }
 
   async function resolveExistingEtfForYahoo(etf: ETF): Promise<ETF> {
@@ -188,10 +274,21 @@ export function HomePage() {
               Historique depuis
               <input type="date" value={since} onChange={(event) => setSince(event.target.value)} />
             </label>
+            <label>
+              Top Boursobank
+              <input
+                type="number"
+                min={1}
+                max={20}
+                value={boursobankLimit}
+                onChange={(event) => setBoursobankLimit(Number(event.target.value))}
+              />
+            </label>
           </div>
           <div className="button-row">
-            <button className="secondary" onClick={() => tryBoursobankTopEtf().catch((error) => setStatus(error.message))}>
-              Top Boursobank expérimental
+            <button className="full-width" onClick={importBoursobankTop} disabled={isImportingTop}>
+              <RefreshCw size={16} className={isImportingTop ? 'spin' : undefined} />
+              {isImportingTop ? 'Import Boursobank...' : 'Importer le top Boursobank'}
             </button>
           </div>
         </div>
@@ -200,7 +297,17 @@ export function HomePage() {
       <section className="panel">
         <div className="panel-heading">
           <span>Univers ETF · {rows.length} suivis</span>
-          <small>{status}</small>
+          <div className="heading-actions">
+            <small>{status}</small>
+            <button
+              className="icon-button danger"
+              title="Supprimer tous les ETF et leurs données"
+              onClick={removeAllRows}
+              disabled={rows.length === 0}
+            >
+              <Trash2 size={16} />
+            </button>
+          </div>
         </div>
         <div className="table-wrap">
           <table>

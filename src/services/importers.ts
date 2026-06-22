@@ -31,6 +31,16 @@ type YahooPricesResponse = {
   prices: PricePoint[];
   providerSymbol: string;
 };
+export type BoursobankTopEtf = {
+  rank: number;
+  name: string;
+  isin: string;
+  boursoIdentifier: string;
+  url: string;
+};
+type BoursobankTopResponse = {
+  etfs: BoursobankTopEtf[];
+};
 
 export class YahooFinanceError extends Error {
   constructor(
@@ -112,8 +122,16 @@ export async function searchYahooEtfByIsin(
   return data?.etf ?? null;
 }
 
-export async function tryBoursobankTopEtf(): Promise<never> {
-  throw new Error('Top Boursobank expérimental: accès navigateur souvent bloqué par CORS.');
+export async function tryBoursobankTopEtf(limit = 15): Promise<BoursobankTopEtf[]> {
+  if (!isSupabaseConfigured) {
+    throw new Error('Supabase est requis pour importer le top Boursobank sans CORS.');
+  }
+
+  const { data, error } = await requireSupabase().functions.invoke<BoursobankTopResponse>('boursobank-top', {
+    body: { limit },
+  });
+  if (error) throw new Error(error.message);
+  return data?.etfs ?? [];
 }
 
 export function parseYahooChartResponse(
