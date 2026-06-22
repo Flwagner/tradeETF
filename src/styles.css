@@ -345,6 +345,11 @@ a:hover {
   background: #ffe0e0;
 }
 
+.chart-shell {
+  position: relative;
+  min-width: 0;
+}
+
 .price-chart,
 .empty-chart {
   display: block;
@@ -353,6 +358,111 @@ a:hover {
   border: 1px solid #e1e7e5;
   border-radius: 6px;
   background: #fbfcfc;
+}
+
+.chart-shell.interactive .price-chart {
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.chart-grid-line {
+  stroke: #dfe8e5;
+  stroke-width: 1;
+}
+
+.chart-stop-line {
+  stroke: #d84b4b;
+  stroke-dasharray: 8 7;
+  stroke-width: 2;
+}
+
+.chart-stop-label {
+  pointer-events: none;
+}
+
+.chart-stop-label rect {
+  fill: rgba(255, 232, 232, 0.96);
+  stroke: #d84b4b;
+  stroke-width: 1;
+}
+
+.chart-stop-label text {
+  fill: #9e2222;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.chart-crosshair {
+  stroke: #52615e;
+  stroke-dasharray: 5 5;
+  stroke-opacity: 0.45;
+  stroke-width: 1.5;
+  pointer-events: none;
+}
+
+.chart-latest-point {
+  fill: white;
+  stroke: #0b8f7b;
+  stroke-width: 3;
+}
+
+.chart-active-point {
+  fill: #0b8f7b;
+  stroke: white;
+  stroke-width: 3;
+  filter: drop-shadow(0 2px 4px rgba(25, 35, 32, 0.2));
+  pointer-events: none;
+}
+
+.chart-tooltip {
+  position: absolute;
+  z-index: 2;
+  display: grid;
+  gap: 3px;
+  min-width: 126px;
+  padding: 8px 10px;
+  border: 1px solid #dce4e1;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 10px 24px rgba(25, 35, 32, 0.16);
+  color: #17211f;
+  pointer-events: none;
+  transform: translate(-50%, calc(-100% - 10px));
+}
+
+.chart-tooltip span {
+  color: #65736f;
+  font-size: 0.76rem;
+}
+
+.chart-tooltip strong {
+  font-size: 0.96rem;
+}
+
+.chart-meta {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 10px;
+  align-items: center;
+  margin-top: 8px;
+  color: #65736f;
+  font-size: 0.8rem;
+}
+
+.chart-meta span:last-child {
+  text-align: right;
+}
+
+.chart-meta strong {
+  color: #17211f;
+}
+
+.chart-meta strong.positive {
+  color: #0b8f3f;
+}
+
+.chart-meta strong.negative {
+  color: #c13737;
 }
 
 .empty-chart {

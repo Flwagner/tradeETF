@@ -44,6 +44,7 @@ export function HomePage() {
   );
   const best = ranking[0] ?? null;
   const latestPrice = best ? best.prices[best.prices.length - 1] : undefined;
+  const bestVisiblePrices = useMemo(() => filterLastMonths(best?.prices ?? [], 6), [best]);
   const isFresh = Boolean(best?.snapshot && latestPrice && daysSince(latestPrice.pricedAt) <= 3 && daysSince(best.snapshot.computedAt) <= 1);
 
   async function refreshDecision() {
@@ -237,7 +238,7 @@ export function HomePage() {
                 </div>
                 <SignalBadge signal={best.snapshot.signal} />
               </div>
-              <PriceSparkline prices={best.prices} stopPrice={best.trailingStop.recommended?.stopPrice} />
+              <PriceSparkline prices={bestVisiblePrices} stopPrice={best.trailingStop.recommended?.stopPrice} />
               <div className="stat-grid">
                 <Stat label="Prix actuel" value={formatCurrency(latestPrice?.closePrice, best.etf.currency)} />
                 <Stat label="Stop conseillé" value={`${best.trailingStop.recommended?.percentage ?? '-'}% · ${formatCurrency(best.trailingStop.recommended?.stopPrice, best.etf.currency)}`} />
@@ -390,6 +391,14 @@ export function HomePage() {
 
 function daysSince(date: string): number {
   return Math.abs(Date.now() - new Date(`${date}T00:00:00`).getTime()) / 86_400_000;
+}
+
+function filterLastMonths(prices: PricePoint[], months: number): PricePoint[] {
+  const latest = prices[prices.length - 1];
+  if (!latest) return [];
+  const from = new Date(`${latest.pricedAt}T00:00:00`);
+  from.setMonth(from.getMonth() - months);
+  return prices.filter((price) => price.pricedAt >= from.toISOString().slice(0, 10));
 }
 
 function looksLikeIsin(value: string): boolean {

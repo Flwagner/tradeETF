@@ -23,7 +23,7 @@ export function EtfDetailPage() {
   const { id } = useParams();
   const [row, setRow] = useState<EtfWithData | null>(null);
   const [status, setStatus] = useState('Chargement...');
-  const [period, setPeriod] = useState<Period>('1y');
+  const [period, setPeriod] = useState<Period>('6m');
 
   useEffect(() => {
     loadEtfData()
@@ -78,7 +78,15 @@ export function EtfDetailPage() {
             ))}
           </div>
         </div>
-        <PriceSparkline prices={visiblePrices} height={210} stopPrice={stop?.stopPrice} />
+        <PriceSparkline
+          prices={visiblePrices}
+          height={230}
+          stopPrice={stop?.stopPrice}
+          stopPercent={stop?.percentage}
+          currency={row.etf.currency}
+          interactive
+          maxPoints={370}
+        />
         <div className="stat-grid wide">
           <Stat label="Performance période" value={formatSignedPercent(periodStats.performance)} />
           <Stat label="Plus bas" value={formatCurrency(periodStats.low, row.etf.currency)} />
