@@ -135,6 +135,10 @@ Ajouter les secrets GitHub:
 
 Le workflow utilise `actions/configure-pages` avec `enablement: true`, ce qui peut activer/configurer Pages automatiquement. Si GitHub refuse encore l’étape `Configure Pages`, activer manuellement GitHub Pages dans `Settings > Pages > Build and deployment > Source: GitHub Actions`.
 
+## Installation mobile
+
+L’app est déclarée comme PWA installable via `public/manifest.webmanifest` et `public/sw.js`. Sur Android/Chrome, ouvrir l’URL GitHub Pages puis utiliser le menu navigateur `Ajouter à l’écran d’accueil` ou `Installer l’application`. Une fois installée, tradeETF s’ouvre en fenêtre autonome grâce au mode `display: standalone`.
+
 ## Note pour agents IA
 
 Contrainte d’architecture impérative: l’application de production doit tourner directement sur GitHub Pages. Il ne doit pas y avoir de backend applicatif, serveur Node, API proxy externe, worker serveur ou cron requis au runtime. Les appels HTTP bloqués par CORS peuvent passer par des Supabase Edge Functions. Le runtime cible est:
