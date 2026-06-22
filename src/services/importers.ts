@@ -1,7 +1,6 @@
 import { isSupabaseConfigured, requireSupabase } from '../lib/supabase';
 import type { ETF, PricePoint } from '../types';
 
-type RawPriceRecord = Record<string, unknown>;
 type YahooChartResponse = {
   chart?: {
     result?: Array<{
@@ -41,34 +40,6 @@ export class YahooFinanceError extends Error {
     super(message);
     this.name = 'YahooFinanceError';
   }
-}
-
-export function parsePriceCsv(input: string, etfId: string, defaultSource = 'csv'): PricePoint[] {
-  const lines = input
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean);
-  if (lines.length < 2) return [];
-
-  const separator = lines[0].includes(';') ? ';' : ',';
-  const headers = splitCsvLine(lines[0], separator).map(normalizeHeader);
-
-  return lines.slice(1).flatMap((line) => {
-    const values = splitCsvLine(line, separator);
-    const record = Object.fromEntries(headers.map((header, index) => [header, values[index] ?? '']));
-    const price = priceFromRecord(record, etfId, defaultSource);
-    return price ? [price] : [];
-  });
-}
-
-export function parsePriceJson(input: string, etfId: string, defaultSource = 'json'): PricePoint[] {
-  const parsed = JSON.parse(input) as RawPriceRecord[] | { prices?: RawPriceRecord[] };
-  const records = Array.isArray(parsed) ? parsed : parsed.prices ?? [];
-  return records.flatMap((record) => {
-    const normalized = Object.fromEntries(Object.entries(record).map(([key, value]) => [normalizeHeader(key), value]));
-    const price = priceFromRecord(normalized, etfId, defaultSource);
-    return price ? [price] : [];
-  });
 }
 
 export function parseEtfTextarea(input: string): Array<Omit<ETF, 'id'>> {
@@ -142,25 +113,7 @@ export async function searchYahooEtfByIsin(
 }
 
 export async function tryBoursobankTopEtf(): Promise<never> {
-  throw new Error('Top Boursobank expérimental: accès navigateur souvent bloqué par CORS. Utiliser le fallback manuel.');
-}
-
-function priceFromRecord(record: RawPriceRecord, etfId: string, defaultSource: string): PricePoint | null {
-  const pricedAt = stringValue(record.date ?? record.priced_at);
-  const closePrice = numberValue(record.close ?? record.close_price);
-  if (!pricedAt || closePrice === null) return null;
-
-  return {
-    etfId,
-    pricedAt,
-    openPrice: numberValue(record.open ?? record.open_price),
-    highPrice: numberValue(record.high ?? record.high_price),
-    lowPrice: numberValue(record.low ?? record.low_price),
-    closePrice,
-    adjustedClosePrice: numberValue(record.adjusted_close ?? record.adj_close ?? record.adjusted_close_price),
-    volume: numberValue(record.volume),
-    source: stringValue(record.source) || defaultSource,
-  };
+  throw new Error('Top Boursobank expérimental: accès navigateur souvent bloqué par CORS.');
 }
 
 export function parseYahooChartResponse(
@@ -200,41 +153,8 @@ export function parseYahooChartResponse(
   });
 }
 
-function normalizeHeader(value: string): string {
-  return value.trim().toLowerCase().replace(/\s+/g, '_');
-}
-
-function numberValue(value: unknown): number | null {
-  if (value === null || value === undefined || value === '') return null;
-  const number = Number(String(value).replace(',', '.'));
-  return Number.isFinite(number) ? number : null;
-}
-
 function finiteNumberOrNull(value: number | null | undefined): number | null {
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
-}
-
-function stringValue(value: unknown): string {
-  return typeof value === 'string' ? value.trim() : value === undefined || value === null ? '' : String(value);
-}
-
-function splitCsvLine(line: string, separator: string): string[] {
-  const values: string[] = [];
-  let current = '';
-  let quoted = false;
-
-  for (const char of line) {
-    if (char === '"') {
-      quoted = !quoted;
-    } else if (char === separator && !quoted) {
-      values.push(current.trim());
-      current = '';
-    } else {
-      current += char;
-    }
-  }
-  values.push(current.trim());
-  return values;
 }
 
 async function yahooHttpErrorMessage(response: Response, symbol: string): Promise<string> {

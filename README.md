@@ -77,12 +77,10 @@ Si le binaire `supabase` n’est pas disponible dans le `PATH`, utiliser le CLI 
 
 L’app supporte:
 
-- import CSV de prix quotidiens avec colonnes `date` ou `priced_at`, `open`, `high`, `low`, `close`, `adjusted_close` ou `adj_close`, `volume`, `source`
-- import JSON sous forme de tableau ou `{ "prices": [...] }`
 - saisie manuelle de l’univers ETF au format `ISIN ou symbole,nom,place,devise,symbole Yahoo`
 - import Yahoo Finance via Supabase Edge Functions pour éviter les blocages CORS du navigateur
 - résolution automatique Yahoo d’un ISIN via la fonction `yahoo-search` quand le symbole Yahoo n’est pas fourni
-- Top Boursobank affiché comme expérimental avec fallback manuel
+- Top Boursobank affiché comme expérimental
 
 Exemples de symboles Yahoo testés:
 

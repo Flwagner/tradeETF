@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Download, RefreshCw, Save, Trash2, Upload } from 'lucide-react';
+import { RefreshCw, Save, Trash2, Upload } from 'lucide-react';
 import { Disclaimer } from '../components/Disclaimer';
 import { PriceSparkline } from '../components/PriceSparkline';
 import { SignalBadge } from '../components/SignalBadge';
@@ -13,8 +13,6 @@ import { buildRows, loadEtfData } from '../services/appData';
 import { deleteEtf, upsertEtf } from '../services/etfs';
 import {
   parseEtfTextarea,
-  parsePriceCsv,
-  parsePriceJson,
   searchYahooEtfByIsin,
   tryBoursobankTopEtf,
   tryYahooDownload,
@@ -26,17 +24,13 @@ import type { EtfWithData, ETF, PricePoint } from '../types';
 export function HomePage() {
   const [rows, setRows] = useState<EtfWithData[]>([]);
   const [status, setStatus] = useState('Chargement...');
-  const [etfInput, setEtfInput] = useState('CW8,Amundi MSCI World UCITS ETF,XPAR,EUR,CW8.PA');
-  const [selectedEtfId, setSelectedEtfId] = useState('');
-  const [importText, setImportText] = useState('');
-  const [importFormat, setImportFormat] = useState<'csv' | 'json'>('csv');
+  const [etfInput, setEtfInput] = useState('');
   const [since, setSince] = useState(new Date(new Date().setFullYear(new Date().getFullYear() - 2)).toISOString().slice(0, 10));
 
   useEffect(() => {
     loadEtfData()
       .then((data) => {
         setRows(data);
-        setSelectedEtfId(data[0]?.etf.id ?? '');
         setStatus(isSupabaseConfigured ? 'Données Supabase chargées.' : 'Supabase non configuré.');
       })
       .catch((error: Error) => setStatus(error.message));
@@ -82,15 +76,6 @@ export function HomePage() {
     }
   }
 
-  async function importPrices() {
-    if (!selectedEtfId || !importText.trim()) return;
-    const parsed =
-      importFormat === 'csv'
-        ? parsePriceCsv(importText, selectedEtfId, 'csv')
-        : parsePriceJson(importText, selectedEtfId, 'json');
-    await mergePrices(parsed);
-  }
-
   async function importYahoo(row: EtfWithData) {
     setStatus(`Import Yahoo ${row.etf.symbol}...`);
     try {
@@ -99,7 +84,7 @@ export function HomePage() {
       const parsed = await tryYahooDownload(symbol, row.etf.id, since);
       await mergePrices(parsed);
     } catch (error) {
-      setStatus(`${(error as Error).message}. Import CSV/JSON manuel disponible.`);
+      setStatus((error as Error).message);
     }
   }
 
@@ -200,35 +185,11 @@ export function HomePage() {
           </button>
           <div className="form-row">
             <label>
-              ETF cible
-              <select value={selectedEtfId} onChange={(event) => setSelectedEtfId(event.target.value)}>
-                {rows.map((row) => (
-                  <option key={row.etf.id} value={row.etf.id}>
-                    {row.etf.symbol}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
               Historique depuis
               <input type="date" value={since} onChange={(event) => setSince(event.target.value)} />
             </label>
           </div>
-          <div className="segmented">
-            <button className={importFormat === 'csv' ? 'active' : ''} onClick={() => setImportFormat('csv')}>CSV</button>
-            <button className={importFormat === 'json' ? 'active' : ''} onClick={() => setImportFormat('json')}>JSON</button>
-          </div>
-          <textarea
-            value={importText}
-            onChange={(event) => setImportText(event.target.value)}
-            rows={7}
-            placeholder="date,open,high,low,close,adjusted_close,volume"
-          />
           <div className="button-row">
-            <button onClick={importPrices}>
-              <Download size={16} />
-              Importer
-            </button>
             <button className="secondary" onClick={() => tryBoursobankTopEtf().catch((error) => setStatus(error.message))}>
               Top Boursobank expérimental
             </button>
