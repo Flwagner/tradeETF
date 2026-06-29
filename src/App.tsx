@@ -4,8 +4,11 @@ import { EtfDetailPage } from './pages/EtfDetailPage';
 import { HomePage } from './pages/HomePage';
 
 export function App() {
+  const isLocalRuntime = isLocalHostname();
+
   return (
-    <div className="app-shell">
+    <div className={isLocalRuntime ? 'app-shell is-local-runtime' : 'app-shell'}>
+      {isLocalRuntime ? <div className="dev-banner">DEV · Localhost</div> : null}
       <header className="topbar">
         <NavLink to="/" className="brand">
           <Activity size={20} />
@@ -24,4 +27,9 @@ export function App() {
       </Routes>
     </div>
   );
+}
+
+function isLocalHostname() {
+  if (typeof window === 'undefined') return false;
+  return ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
 }

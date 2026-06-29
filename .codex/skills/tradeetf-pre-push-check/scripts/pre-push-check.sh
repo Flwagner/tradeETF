@@ -94,6 +94,39 @@ open_url() {
   return 1
 }
 
+capture_screenshot() {
+  local target_url="$1"
+  local size="${PRE_PUSH_SCREENSHOT_SIZE:-390,844}"
+  local stamp
+  stamp="$(date +%Y%m%d-%H%M%S)"
+  local chrome_path="/mnt/c/Program Files/Google/Chrome/Application/chrome.exe"
+
+  if [ -x "$chrome_path" ]; then
+    local wsl_dir="/mnt/c/Temp/tradeetf-pre-push-screens"
+    local win_path="C:\\Temp\\tradeetf-pre-push-screens\\tradeetf-pre-push-${stamp}.png"
+    local wsl_path="${wsl_dir}/tradeetf-pre-push-${stamp}.png"
+    mkdir -p "$wsl_dir"
+    if "$chrome_path" --headless=new --disable-gpu --screenshot="$win_path" --window-size="$size" "$target_url" >/dev/null 2>&1; then
+      echo "$wsl_path"
+      return 0
+    fi
+  fi
+
+  local screenshot_dir="${PRE_PUSH_SCREENSHOT_DIR:-/tmp/tradeetf-pre-push-screens}"
+  local screenshot_path="${screenshot_dir}/tradeetf-pre-push-${stamp}.png"
+  mkdir -p "$screenshot_dir"
+
+  for browser in google-chrome google-chrome-stable chromium chromium-browser; do
+    if command -v "$browser" >/dev/null 2>&1 &&
+      "$browser" --headless=new --disable-gpu --screenshot="$screenshot_path" --window-size="$size" "$target_url" >/dev/null 2>&1; then
+      echo "$screenshot_path"
+      return 0
+    fi
+  done
+
+  return 1
+}
+
 echo "Starting local production preview"
 npm run preview -- --host 127.0.0.1 --port "${PRE_PUSH_PORT:-4173}" >"$log_file" 2>&1 &
 preview_pid="$!"
@@ -126,6 +159,16 @@ fi
 
 curl --silent --show-error --fail "$url" >/dev/null
 echo "Preview responded successfully at $url"
+
+screenshot_path="$(capture_screenshot "$url" || true)"
+if [ -n "$screenshot_path" ]; then
+  echo "Screenshot proof: $screenshot_path"
+elif [ "${PRE_PUSH_REQUIRE_SCREENSHOT:-0}" = "1" ]; then
+  echo "Screenshot proof could not be generated."
+  exit 1
+else
+  echo "Screenshot proof could not be generated; continuing because PRE_PUSH_REQUIRE_SCREENSHOT is not set."
+fi
 
 if [ "${PRE_PUSH_OPEN_BROWSER:-0}" = "1" ]; then
   echo "Opening browser at $url"

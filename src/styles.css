@@ -28,6 +28,9 @@
   --color-highlight-bg: #fff8e8;
   --color-highlight-border: #f0d9a8;
   --color-highlight-accent: #d99a18;
+  --color-dev-banner-bg: #d99a18;
+  --color-dev-banner-text: #111816;
+  --color-dev-banner-border: #b97808;
   --color-signal-buy-text: #075c2b;
   --color-signal-buy-bg: #dff8e9;
   --color-signal-watch-text: #8a5200;
@@ -69,6 +72,9 @@
     --color-highlight-bg: #302617;
     --color-highlight-border: #5c4524;
     --color-highlight-accent: #e3a83a;
+    --color-dev-banner-bg: #e3a83a;
+    --color-dev-banner-text: #111816;
+    --color-dev-banner-border: #5c4524;
     --color-signal-buy-text: #a9f3c8;
     --color-signal-buy-bg: #123a25;
     --color-signal-watch-text: #ffd48b;
@@ -233,11 +239,33 @@ a:hover {
 
 .app-shell {
   min-height: 100vh;
+  --topbar-offset: 0px;
+}
+
+.app-shell.is-local-runtime {
+  --topbar-offset: 30px;
+}
+
+.dev-banner {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--topbar-offset);
+  border-bottom: 1px solid var(--color-dev-banner-border);
+  background: var(--color-dev-banner-bg);
+  color: var(--color-dev-banner-text);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .topbar {
   position: sticky;
-  top: 0;
+  top: var(--topbar-offset);
   z-index: 5;
   display: flex;
   align-items: center;

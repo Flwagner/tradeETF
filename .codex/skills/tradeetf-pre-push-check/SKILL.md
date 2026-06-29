@@ -31,6 +31,7 @@ On WSL, the script tries to open Google Chrome first, then falls back to other a
 - Whether `npm run validate` passed.
 - Whether the local production preview responded.
 - The local URL checked.
+- The screenshot proof path, or a clear note that screenshot capture was unavailable.
 - Any failure message and the next concrete fix.
 
 ## Behavior
@@ -39,7 +40,15 @@ The script loads `nvm` when available and tries to use Node 22, matching this re
 
 It then runs `npm run validate`, which should cover unit tests and the production build for this repository.
 
-After validation, it starts `npm run preview` on localhost, waits until Vite exposes a local URL, requests that URL with `curl`, optionally opens it in the desktop browser, then shuts the preview server down by default. This is a smoke test, not a full visual or interaction test.
+After validation, it starts `npm run preview` on localhost, waits until Vite exposes a local URL, requests that URL with `curl`, captures a mobile-size screenshot proof, optionally opens it in the desktop browser, then shuts the preview server down by default. This is a smoke test, not a full visual or interaction test.
+
+Screenshot proof is attempted systematically. On WSL with Chrome installed, the screenshot is written under:
+
+```text
+/mnt/c/Temp/tradeetf-pre-push-screens/
+```
+
+If no compatible headless browser is available, the script warns and continues. Set `PRE_PUSH_REQUIRE_SCREENSHOT=1` to make screenshot capture mandatory.
 
 When the user wants to inspect the app manually, set `PRE_PUSH_KEEP_PREVIEW=1`. In that mode, the script keeps the preview server running until the user presses `Ctrl+C`.
 
