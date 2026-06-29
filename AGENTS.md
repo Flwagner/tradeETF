@@ -46,6 +46,14 @@ npm run validate
 
 `npm run validate` is the preferred final check. It runs the test suite and the production build.
 
+Before pushing code, use the versioned pre-push skill:
+
+```bash
+.codex/skills/tradeetf-pre-push-check/scripts/pre-push-check.sh
+```
+
+This runs `npm run validate`, starts a local production preview, and checks that the app responds on the GitHub Pages base path.
+
 ## Frontend Constraints
 
 - Keep the app compatible with GitHub Pages.

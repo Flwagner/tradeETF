@@ -1,0 +1,4 @@
+interface:
+  display_name: "tradeETF Pre-Push Check"
+  short_description: "Run tradeETF checks before pushing"
+  default_prompt: "Use $tradeetf-pre-push-check before pushing my tradeETF changes."
