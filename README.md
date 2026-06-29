@@ -13,6 +13,8 @@ Les classements sont indicatifs, hors frais, spread et fiscalité, et ne constit
 
 ## Lancement local
 
+Node.js 22 ou plus récent est attendu, comme dans le workflow GitHub Actions.
+
 ```bash
 npm install
 cp .env.example .env.local
@@ -106,7 +108,10 @@ Invariants importants:
 ```bash
 npm test
 npm run build
+npm run validate
 ```
+
+`npm run validate` lance les tests puis le build TypeScript/Vite.
 
 ## Déploiement GitHub Pages
 
@@ -134,26 +139,6 @@ Le workflow utilise `actions/configure-pages` avec `enablement: true`, ce qui pe
 
 L’app est déclarée comme PWA installable via `public/manifest.webmanifest` et `public/sw.js`. Sur Android/Chrome, ouvrir l’URL GitHub Pages puis utiliser le menu navigateur `Ajouter à l’écran d’accueil` ou `Installer l’application`. Une fois installée, tradeETF s’ouvre en fenêtre autonome grâce au mode `display: standalone`.
 
-## Note pour agents IA
+## Agents IA
 
-Contrainte d’architecture impérative: l’application de production doit tourner directement sur GitHub Pages. Il ne doit pas y avoir de backend applicatif, serveur Node, API proxy externe, worker serveur ou cron requis au runtime. Les appels HTTP bloqués par CORS peuvent passer par des Supabase Edge Functions. Le runtime cible est:
-
-```text
-React statique sur GitHub Pages -> Supabase DB / Supabase Edge Functions
-```
-
-Les imports et écritures en base doivent être réalisables depuis l’interface navigateur. Ne pas ajouter de script console d’import ou d’outil Node local comme chemin fonctionnel principal.
-
-Le projet est développé localement dans WSL. Exécuter les commandes depuis le shell WSL, par exemple dans:
-
-```text
-/home/florent/dev/perso/tradeETF
-```
-
-Quand `npm run dev` est lancé dans WSL, l’application est normalement accessible depuis le navigateur Windows via:
-
-```text
-http://localhost:5173/tradeETF/
-```
-
-Ne pas remplacer les chemins Linux/WSL par des chemins Windows dans la configuration du projet.
+Les consignes de travail pour les agents IA sont dans [AGENTS.md](./AGENTS.md).
