@@ -44,6 +44,56 @@ cleanup() {
 }
 trap cleanup EXIT
 
+open_url() {
+  local target_url="$1"
+  local chrome_path="/mnt/c/Program Files/Google/Chrome/Application/chrome.exe"
+
+  if [ -x "$chrome_path" ] && "$chrome_path" "$target_url" >/dev/null 2>&1; then
+    echo "Opened browser with Google Chrome."
+    return 0
+  fi
+
+  if command -v powershell.exe >/dev/null 2>&1 &&
+    powershell.exe -NoProfile -NonInteractive -Command 'Start-Process chrome.exe -ArgumentList $args[0]' "$target_url" >/dev/null 2>&1; then
+    echo "Opened browser with Google Chrome through powershell.exe."
+    return 0
+  fi
+
+  if command -v wslview >/dev/null 2>&1 && wslview "$target_url" >/dev/null 2>&1; then
+    echo "Opened browser with wslview."
+    return 0
+  fi
+
+  if command -v powershell.exe >/dev/null 2>&1 &&
+    powershell.exe -NoProfile -NonInteractive -Command 'Start-Process -FilePath $args[0]' "$target_url" >/dev/null 2>&1; then
+    echo "Opened browser with powershell.exe."
+    return 0
+  fi
+
+  if command -v explorer.exe >/dev/null 2>&1 && explorer.exe "$target_url" >/dev/null 2>&1; then
+    echo "Opened browser with explorer.exe."
+    return 0
+  fi
+
+  if command -v cmd.exe >/dev/null 2>&1 && cmd.exe /C start "" "$target_url" >/dev/null 2>&1; then
+    echo "Opened browser with cmd.exe."
+    return 0
+  fi
+
+  if command -v xdg-open >/dev/null 2>&1 && xdg-open "$target_url" >/dev/null 2>&1; then
+    echo "Opened browser with xdg-open."
+    return 0
+  fi
+
+  if command -v open >/dev/null 2>&1 && open "$target_url" >/dev/null 2>&1; then
+    echo "Opened browser with open."
+    return 0
+  fi
+
+  echo "No browser opener succeeded. Open this URL manually: $target_url"
+  return 1
+}
+
 echo "Starting local production preview"
 npm run preview -- --host 127.0.0.1 --port "${PRE_PUSH_PORT:-4173}" >"$log_file" 2>&1 &
 preview_pid="$!"
@@ -79,15 +129,13 @@ echo "Preview responded successfully at $url"
 
 if [ "${PRE_PUSH_OPEN_BROWSER:-0}" = "1" ]; then
   echo "Opening browser at $url"
-  if command -v cmd.exe >/dev/null 2>&1; then
-    cmd.exe /C start "" "$url" >/dev/null 2>&1 || true
-  elif command -v xdg-open >/dev/null 2>&1; then
-    xdg-open "$url" >/dev/null 2>&1 || true
-  elif command -v open >/dev/null 2>&1; then
-    open "$url" >/dev/null 2>&1 || true
-  else
-    echo "No browser opener found. Open this URL manually: $url"
-  fi
+  open_url "$url" || true
 fi
 
-echo "Pre-push check passed."
+if [ "${PRE_PUSH_KEEP_PREVIEW:-0}" = "1" ]; then
+  echo "Pre-push check passed. Keeping preview server running at $url"
+  echo "Press Ctrl+C to stop it."
+  wait "$preview_pid"
+fi
+
+echo "Pre-push check passed. Preview server stopped."

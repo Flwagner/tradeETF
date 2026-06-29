@@ -20,8 +20,10 @@ Use this skill before pushing tradeETF changes or when the user asks for a final
 4. If the user explicitly wants a browser window opened, rerun or run with:
 
 ```bash
-PRE_PUSH_OPEN_BROWSER=1 .codex/skills/tradeetf-pre-push-check/scripts/pre-push-check.sh
+PRE_PUSH_OPEN_BROWSER=1 PRE_PUSH_KEEP_PREVIEW=1 .codex/skills/tradeetf-pre-push-check/scripts/pre-push-check.sh
 ```
+
+On WSL, the script tries to open Google Chrome first, then falls back to other available browser openers.
 
 5. Report the outcome clearly:
 
@@ -37,7 +39,9 @@ The script loads `nvm` when available and tries to use Node 22, matching this re
 
 It then runs `npm run validate`, which should cover unit tests and the production build for this repository.
 
-After validation, it starts `npm run preview` on localhost, waits until Vite exposes a local URL, requests that URL with `curl`, optionally opens it in the desktop browser, then shuts the preview server down. This is a smoke test, not a full visual or interaction test.
+After validation, it starts `npm run preview` on localhost, waits until Vite exposes a local URL, requests that URL with `curl`, optionally opens it in the desktop browser, then shuts the preview server down by default. This is a smoke test, not a full visual or interaction test.
+
+When the user wants to inspect the app manually, set `PRE_PUSH_KEEP_PREVIEW=1`. In that mode, the script keeps the preview server running until the user presses `Ctrl+C`.
 
 ## Push Discipline
 
