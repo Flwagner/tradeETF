@@ -31,7 +31,7 @@ On WSL, the script tries to open Google Chrome first, then falls back to other a
 - Whether `npm run validate` passed.
 - Whether the local production preview responded.
 - The local URL checked.
-- The screenshot proof path, or a clear note that screenshot capture was unavailable.
+- The screenshot proof rendered visibly in the chat. Do not report only the filesystem path.
 - Any failure message and the next concrete fix.
 
 ## Behavior
@@ -49,6 +49,8 @@ Screenshot proof is attempted systematically. On WSL with Chrome installed, the 
 ```
 
 If no compatible headless browser is available, the script warns and continues. Set `PRE_PUSH_REQUIRE_SCREENSHOT=1` to make screenshot capture mandatory.
+
+When the script prints `Screenshot proof: <path>`, treat that path as an internal artifact handle. Load that image with the available local image viewing/rendering tool and show the image in the chat response. Mention the path only as secondary detail when useful, or when image rendering is unavailable.
 
 When the user wants to inspect the app manually, set `PRE_PUSH_KEEP_PREVIEW=1`. In that mode, the script keeps the preview server running until the user presses `Ctrl+C`.
 
