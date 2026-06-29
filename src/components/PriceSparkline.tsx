@@ -64,8 +64,8 @@ export function PriceSparkline({
       >
         <defs>
           <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopColor="#13a38b" stopOpacity="0.25" />
-            <stop offset="100%" stopColor="#13a38b" stopOpacity="0.02" />
+            <stop offset="0%" stopColor="var(--chart-accent)" stopOpacity="0.25" />
+            <stop offset="100%" stopColor="var(--chart-accent)" stopOpacity="0.02" />
           </linearGradient>
         </defs>
         {[0.25, 0.5, 0.75].map((ratio) => (
@@ -79,7 +79,7 @@ export function PriceSparkline({
           />
         ))}
         <polyline points={areaPoints} fill={`url(#${gradientId})`} stroke="none" />
-        <polyline points={points} fill="none" stroke="#0b8f7b" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+        <polyline points={points} fill="none" stroke="var(--color-primary)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
         {stopY !== null ? (
           <>
             <line x1={padding} x2={width - padding} y1={stopY} y2={stopY} className="chart-stop-line" />
