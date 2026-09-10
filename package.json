@@ -14,6 +14,7 @@
     "supabase:functions:deploy": "supabase functions deploy yahoo-search && supabase functions deploy yahoo-prices && supabase functions deploy boursobank-top",
     "test": "vitest run",
     "test:watch": "vitest",
+    "sync:prices": "node scripts/sync-prices.mjs",
     "validate": "npm test && npm run build"
   },
   "dependencies": {

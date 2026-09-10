@@ -68,6 +68,17 @@ This runs `npm run validate`, starts a local production preview, and checks that
 - Yahoo Finance and Boursobank network calls that need server-side CORS handling should go through Edge Functions.
 - Public/anon Supabase keys are acceptable in the frontend for this personal project, with RLS policies matching that assumption.
 
+## Automated Price Sync
+
+A GitHub Actions workflow (`sync-prices.yml`) runs daily at 9:00 UTC to refresh ETF prices and recompute momentum snapshots. The Boursobank top ETFs are also refreshed weekly.
+
+- Script: `scripts/sync-prices.mjs`
+- Local run: `SUPABASE_URL=... SUPABASE_ANON_KEY=... npm run sync:prices`
+- With Boursobank: `npm run sync:prices -- --with-boursobank`
+- Secrets required: `SUPABASE_URL`, `SUPABASE_ANON_KEY` (in the `prod` environment)
+- The script mirrors the momentum computation from `src/domain/momentum.ts` to keep the CI pipeline dependency-free.
+- The browser-based import remains the primary path; this automation is supplementary.
+
 ## Financial Domain Rules
 
 The app is informational and must not present rankings as financial advice. Keep visible disclaimers aligned with this principle.
