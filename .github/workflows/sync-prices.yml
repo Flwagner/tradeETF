@@ -23,8 +23,8 @@ jobs:
     environment:
       name: prod
     env:
-      SUPABASE_URL: ${{ secrets.SUPABASE_URL || vars.SUPABASE_URL }}
-      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || vars.SUPABASE_ANON_KEY }}
+      SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -41,8 +41,8 @@ jobs:
       - name: Check Supabase env vars
         run: |
           if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
-            echo "Missing SUPABASE_URL or SUPABASE_ANON_KEY."
-            echo "Set them as GitHub Actions secrets or environment variables in the prod environment."
+            echo "Missing VITE_SUPABASE_URL or VITE_SUPABASE_PUBLISHABLE_KEY secrets."
+            echo "These should already exist in the prod environment."
             exit 1
           fi
 
